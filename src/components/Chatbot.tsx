@@ -29,10 +29,11 @@ export default function Chatbot() {
   }, [messages, loading]);
 
   useEffect(() => {
-    if (!isOpen && messages.length > 1) {
+    const lastMessage = messages[messages.length - 1];
+    if (!isOpen && lastMessage && lastMessage.role === "assistant") {
       setHasNewMessage(true);
     }
-  }, [messages, isOpen]);
+  }, [messages.length]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

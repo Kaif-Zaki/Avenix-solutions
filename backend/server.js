@@ -130,6 +130,47 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
   }
 });
 
+// Clear Cloudinary Images API
+app.post("/api/cloudinary/clear", async (req, res) => {
+  try {
+    if (!isCloudinaryConfigured) {
+      return res.status(400).json({ error: "Cloudinary is not configured." });
+    }
+
+    const authString = Buffer.from(
+      `${cloudinaryConfig.apiKey}:${cloudinaryConfig.apiSecret}`
+    ).toString("base64");
+
+    const folder = cloudinaryConfig.folder;
+    const url = new URL(
+      `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/resources/image/upload`
+    );
+    url.searchParams.append("prefix", folder);
+    url.searchParams.append("all", "true");
+    url.searchParams.append("invalidate", "true");
+
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Basic ${authString}`,
+      },
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: payload.error?.message || "Failed to clear Cloudinary folder."
+      });
+    }
+
+    res.json({ success: true, deleted: payload.deleted });
+  } catch (error) {
+    console.error("Cloudinary clear error:", error);
+    res.status(500).json({ error: "Server error while clearing Cloudinary folder: " + error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI ;
 

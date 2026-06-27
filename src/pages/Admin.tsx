@@ -26,7 +26,8 @@ import {
   User,
   Edit3,
   Menu,
-  X
+  X,
+  Tag
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { apiFetch, mediaUrl } from "@/lib/api";
@@ -37,7 +38,7 @@ export default function Admin() {
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [activeTab, setActiveTab] = useState<"general" | "services" | "projects" | "pricing" | "faqs" | "process" | "profile">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "services" | "projects" | "categories" | "pricing" | "faqs" | "process" | "profile">("general");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // CMS States
@@ -271,6 +272,28 @@ export default function Admin() {
     e.preventDefault();
     db.setCompany(company);
     toast.success("General site configuration updated!");
+  };
+
+  const handleClearCloudinary = async () => {
+    if (!window.confirm("Are you sure you want to delete ALL images from your Cloudinary folder? This will clean up the folder but any projects using these image URLs will show broken images! This action CANNOT be undone.")) {
+      return;
+    }
+
+    const toastId = toast.loading("Clearing Cloudinary folder...");
+    try {
+      const res = await apiFetch("/api/cloudinary/clear", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Cloudinary cleared successfully! Deleted ${data.deleted?.length || 0} images.`, { id: toastId });
+      } else {
+        toast.error(data.error || "Failed to clear Cloudinary folder.", { id: toastId });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Network or server connection failed.", { id: toastId });
+    }
   };
 
   // Services actions
@@ -546,6 +569,7 @@ export default function Admin() {
               { id: "general", label: "General Settings", icon: Settings },
               { id: "services", label: "Services CMS", icon: Layers },
               { id: "projects", label: "Portfolio CMS", icon: Briefcase },
+              { id: "categories", label: "Categories CMS", icon: Tag },
               { id: "pricing", label: "Pricing Tiers", icon: DollarSign },
               { id: "process", label: "Process Steps", icon: CheckCircle },
               { id: "faqs", label: "FAQs CMS", icon: HelpCircle },
@@ -682,6 +706,21 @@ export default function Admin() {
                   Save Company Config
                 </button>
               </form>
+
+              <div className="mt-8 border-t border-white/10 pt-6 max-w-2xl">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-[#e7b464]">Cloudinary Storage Management</h3>
+                <p className="mt-1.5 text-xs text-stone-400">
+                  Delete all uploaded project images from Cloudinary storage to free up space. This action cannot be undone.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleClearCloudinary}
+                  className="mt-3.5 inline-flex items-center gap-2 rounded-lg bg-red-650/15 border border-red-500/25 px-4 py-2.5 text-xs font-bold text-red-400 transition hover:bg-red-600 hover:text-white"
+                >
+                  <Trash2 className="h-4.5 w-4.5" />
+                  Clean Cloudinary Folder
+                </button>
+              </div>
             </div>
           )}
 
@@ -1000,68 +1039,7 @@ export default function Admin() {
                 </button>
               </form>
 
-              {/* Category Management Widget */}
-              <div className="mt-8 p-6 rounded-lg bg-white/5 border border-white/5 space-y-4 max-w-3xl">
-                <p className="text-xs font-bold uppercase text-[#e7b464] tracking-wider">Manage Portfolio Categories</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={categoryInput}
-                    onChange={(e) => setCategoryInput(e.target.value)}
-                    placeholder="New category name (e.g. SaaS App)"
-                    className="min-h-10 flex-1 rounded-lg border border-white/10 bg-[#1e2a27] px-3 text-xs outline-none focus:border-[#e7b464]"
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const clean = categoryInput.trim();
-                      if (!clean) {
-                        toast.error("Category name cannot be empty.");
-                        return;
-                      }
-                      if (categories.includes(clean)) {
-                        toast.error("Category already exists.");
-                        return;
-                      }
-                      await db.addCategory(clean);
-                      setCategoryInput("");
-                      toast.success(`Category "${clean}" added!`);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#e7b464] px-4 py-2 text-xs font-bold text-stone-950 hover:bg-[#f1c77e]"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Category
-                  </button>
-                </div>
-                
-                {/* Active Categories List */}
-                <div className="mt-3">
-                  <span className="text-[11px] font-bold text-stone-400">Active Categories:</span>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {categories.map((cat) => (
-                      <span
-                        key={cat}
-                        className="inline-flex items-center gap-1.5 rounded bg-[#1e2a27] border border-white/10 px-3 py-1 text-xs text-stone-300"
-                      >
-                        {cat}
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            if (confirm(`Are you sure you want to delete category "${cat}"? Projects using this category won't be deleted but will keep their current category.`)) {
-                              await db.deleteCategory(cat);
-                              toast.success(`Category "${cat}" deleted.`);
-                            }
-                          }}
-                          className="text-red-400 hover:text-red-200 font-bold ml-1"
-                          title="Delete Category"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+
 
               {/* List */}
               <div className="mt-6 space-y-3 max-w-4xl">
@@ -1247,6 +1225,78 @@ export default function Admin() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* PORTFOLIO CATEGORIES CMS PANEL */}
+          {activeTab === "categories" && (
+            <div>
+              <h2 className="text-xl font-bold tracking-tight border-b border-white/10 pb-4">Manage Portfolio Categories</h2>
+              
+              {/* Category Management Widget */}
+              <div className="mt-5 p-6 rounded-lg bg-white/5 border border-white/5 space-y-4 max-w-3xl">
+                <p className="text-xs font-bold uppercase text-[#e7b464] tracking-wider font-semibold">Add New Category</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={categoryInput}
+                    onChange={(e) => setCategoryInput(e.target.value)}
+                    placeholder="New category name (e.g. SaaS App)"
+                    className="min-h-10 flex-1 rounded-lg border border-white/10 bg-[#1e2a27] px-3 text-xs outline-none focus:border-[#e7b464]"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const clean = categoryInput.trim();
+                      if (!clean) {
+                        toast.error("Category name cannot be empty.");
+                        return;
+                      }
+                      if (categories.includes(clean)) {
+                        toast.error("Category already exists.");
+                        return;
+                      }
+                      await db.addCategory(clean);
+                      setCategories(db.getCategories());
+                      setCategoryInput("");
+                      toast.success(`Category "${clean}" added!`);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#e7b464] px-4 py-2 text-xs font-bold text-stone-950 hover:bg-[#f1c77e]"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Category
+                  </button>
+                </div>
+                
+                {/* Active Categories List */}
+                <div className="mt-4">
+                  <span className="text-[11px] font-bold text-stone-400">Active Categories:</span>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {categories.map((cat) => (
+                      <span
+                        key={cat}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#1e2a27] border border-white/10 px-3 py-1.5 text-xs text-stone-300"
+                      >
+                        {cat}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (confirm(`Are you sure you want to delete category "${cat}"? Projects using this category won't be deleted but will keep their current category.`)) {
+                              await db.deleteCategory(cat);
+                              setCategories(db.getCategories());
+                              toast.success(`Category "${cat}" deleted.`);
+                            }
+                          }}
+                          className="text-red-400 hover:text-red-200 font-bold ml-1"
+                          title="Delete Category"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}

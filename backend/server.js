@@ -706,11 +706,23 @@ app.delete("/api/categories/:name", async (req, res) => {
   }
 });
 
-// Serve frontend build in production
-if (process.env.NODE_ENV === "production") {
+// Serve frontend build in production if the folder exists
+if (process.env.NODE_ENV === "production" && fs.existsSync(path.join(rootDir, "dist"))) {
   app.use(express.static(path.join(rootDir, "dist")));
   app.get("*", (req, res) => {
     res.sendFile(path.join(rootDir, "dist", "index.html"));
+  });
+} else {
+  // Standalone backend configuration or local development fallback
+  app.get("/", (req, res) => {
+    res.json({ 
+      message: "Nexora Tech Backend API is running successfully.", 
+      status: "healthy",
+      endpoints: {
+        health: "/api/health",
+        siteData: "/api/site-data"
+      }
+    });
   });
 }
 

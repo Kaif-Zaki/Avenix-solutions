@@ -70,6 +70,12 @@ CLOUDINARY_FOLDER=nexora/projects
 Render provides `PORT` automatically, so you can also omit it.
 Do not rely on a committed `.env` file on Render; use Render's Environment tab for these values.
 
+> [!TIP]
+> **CORS Configuration**: The `CORS_ORIGIN` variable supports multiple comma-separated origins. For example, to allow access from both your production Vercel app and local environment, set:
+> `CORS_ORIGIN=https://your-vercel-domain.vercel.app,http://127.0.0.1:8080`
+>
+> **Database Seeding**: The server automatically seeds initial records (services, projects, pricing, FAQs, and categories) on startup if the MongoDB database collections are empty.
+
 ## Vercel Frontend
 
 Create a Vercel project from the repo root with:
@@ -84,4 +90,6 @@ Set this Vercel environment variable:
 VITE_API_BASE_URL=https://your-render-service.onrender.com
 ```
 
-Leave `VITE_API_BASE_URL` empty only for local development.
+> [!NOTE]
+> Make sure to configure the Vercel environment variables *before* triggerring the build, since Vite bakes these environment variables into the static javascript build bundle.
+> Leave `VITE_API_BASE_URL` empty only for local development.

@@ -816,6 +816,7 @@ const buildSystemInstruction = async () => {
 Your goal is to answer questions about our business, guide potential clients through our services, showcase our portfolio, explain our pricing options, and collect inquiries/leads if someone wants to work with us.
 
 Here is the up-to-date information about our business:
+- Owner/Founder: Kaif Zaki
 - Tagline: ${company.tagline || ""}
 - Email: ${company.email || ""}
 - Phone: ${company.phone || ""}
@@ -854,6 +855,7 @@ Format:
 \`\`\`
 Only output this JSON block once you have successfully gathered at least a name and email or project details from the user. Explain to the user that you are submitting their inquiry to our team.
 4. Keep answers relatively concise and easy to read. Use bullet points where appropriate.
+5. If anyone asks about the owner, founder, or creator of Avenix Solutions, clearly state that it is Kaif Zaki.
 `;
   return instruction;
 };

@@ -108,7 +108,8 @@ export default function Admin() {
       iconName: "BriefcaseBusiness",
       palette: "from-sky-600 via-teal-500 to-emerald-700",
       metrics: [],
-      imageUrl: ""
+      imageUrl: "",
+      liveUrl: ""
     };
   });
 
@@ -344,7 +345,8 @@ export default function Admin() {
       iconName: "BriefcaseBusiness",
       palette: "from-sky-600 via-teal-500 to-emerald-700",
       metrics: [],
-      imageUrl: ""
+      imageUrl: "",
+      liveUrl: ""
     });
     setNewProjectMetrics("");
     toast.success("New project added to portfolio!");
@@ -916,6 +918,17 @@ export default function Admin() {
                 </label>
 
                 <label className="block">
+                  <span className="text-[11px] font-bold text-stone-400">Live Project URL (Optional)</span>
+                  <input
+                    type="url"
+                    value={newProject.liveUrl || ""}
+                    onChange={(e) => setNewProject(prev => ({ ...prev, liveUrl: e.target.value }))}
+                    placeholder="e.g. https://avenixsolutions.com"
+                    className="mt-1.5 min-h-10 w-full rounded-lg border border-white/10 bg-[#1e2a27] px-3 text-xs outline-none focus:border-[#e7b464]"
+                  />
+                </label>
+
+                <label className="block">
                   <span className="text-[11px] font-bold text-stone-400">Project Image (Optional)</span>
                   <input
                     type="file"
@@ -1096,6 +1109,17 @@ export default function Admin() {
                           </label>
 
                           <label className="block">
+                            <span className="text-[10px] font-bold text-stone-400">Live Project URL (Optional)</span>
+                            <input
+                              type="url"
+                              value={editProject.liveUrl || ""}
+                              onChange={(e) => setEditProject(prev => prev ? ({ ...prev, liveUrl: e.target.value }) : null)}
+                              placeholder="e.g. https://avenixsolutions.com"
+                              className="mt-1 min-h-9 w-full rounded border border-white/10 bg-[#16201d] px-3 text-xs outline-none focus:border-[#e7b464]"
+                            />
+                          </label>
+
+                          <label className="block">
                             <span className="text-[10px] font-bold text-stone-400">Project Image (Optional)</span>
                             <input
                               type="file"
@@ -1143,6 +1167,12 @@ export default function Admin() {
                               <span className="text-xs text-stone-400 font-normal">({item.iconName})</span>
                             </h4>
                             <p className="text-xs text-stone-300 mt-1">{item.description}</p>
+                            {item.liveUrl && (
+                              <p className="text-[10px] text-stone-400 mt-1.5 flex items-center gap-1.5">
+                                <span className="font-bold text-[#e7b464]">Live Link:</span> 
+                                <a href={item.liveUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-sky-400 break-all">{item.liveUrl}</a>
+                              </p>
+                            )}
                             <div className="mt-2 flex flex-wrap gap-1.5">
                               {item.metrics.map(metric => (
                                 <span key={metric} className="rounded bg-[#23443d]/20 border border-[#23443d]/30 px-2 py-0.5 text-[10px] text-stone-200">{metric}</span>

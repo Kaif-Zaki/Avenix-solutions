@@ -172,7 +172,8 @@ const ProjectSchema = new mongoose.Schema({
   description: { type: String, default: "" },
   metrics: [String],
   palette: { type: String, default: "from-sky-600 via-teal-500 to-emerald-700" },
-  imageUrl: { type: String, default: "" }
+  imageUrl: { type: String, default: "" },
+  liveUrl: { type: String, default: "" }
 }, { timestamps: true });
 
 const PricingSchema = new mongoose.Schema({
@@ -282,6 +283,7 @@ const DEFAULT_PROJECTS = [
     description: "A premium multi-section company site with case studies, enquiry routing, performance SEO, and analytics.",
     metrics: ["+42% enquiries", "98 Lighthouse", "10 day launch"],
     palette: "from-emerald-600 via-teal-500 to-stone-700",
+    liveUrl: "https://avenixsolutions.com"
   },
   {
     id: "p2",
@@ -291,6 +293,7 @@ const DEFAULT_PROJECTS = [
     description: "A branch-ready POS dashboard for stock movement, daily sales, customer credit, and management reports.",
     metrics: ["3 branches", "Live stock", "Daily reports"],
     palette: "from-amber-500 via-orange-500 to-rose-500",
+    liveUrl: "https://avenixsolutions.com"
   },
   {
     id: "p3",
@@ -300,6 +303,7 @@ const DEFAULT_PROJECTS = [
     description: "A scheduling and CRM workspace that helps a services team manage leads, jobs, invoices, and follow-ups.",
     metrics: ["65% faster ops", "CRM flow", "Invoice sync"],
     palette: "from-sky-600 via-teal-500 to-emerald-700",
+    liveUrl: ""
   },
 ];
 

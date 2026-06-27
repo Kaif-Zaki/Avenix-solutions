@@ -1,0 +1,160 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 42% 94%;
+    --foreground: 20 14% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 8%;
+    --primary: 166 32% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 39 72% 65%;
+    --secondary-foreground: 20 14% 8%;
+    --muted: 40 26% 88%;
+    --muted-foreground: 25 10% 36%;
+    --accent: 158 25% 44%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 74% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 28 18% 82%;
+    --input: 28 18% 82%;
+    --ring: 158 25% 44%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", sans-serif;
+    letter-spacing: 0;
+  }
+
+  button,
+  a,
+  input,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .hero-orbit {
+    animation: hero-orbit 24s linear infinite;
+  }
+
+  .hero-particle {
+    animation: hero-pulse 10s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-orbit {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+@keyframes hero-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.72);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+/* Swiper Navigation & Pagination Custom Styling */
+.portfolio-slider .swiper-button-next,
+.portfolio-slider .swiper-button-prev {
+  color: #23443d !important;
+  background: white !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.25s ease !important;
+}
+
+.portfolio-slider .swiper-button-next:hover,
+.portfolio-slider .swiper-button-prev:hover {
+  background: #23443d !important;
+  color: white !important;
+  transform: scale(1.05);
+}
+
+.portfolio-slider .swiper-button-next:after,
+.portfolio-slider .swiper-button-prev:after {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+.portfolio-slider .swiper-button-prev {
+  left: 8px !important;
+}
+
+.portfolio-slider .swiper-button-next {
+  right: 8px !important;
+}
+
+@media (max-width: 768px) {
+  .portfolio-slider .swiper-button-next,
+  .portfolio-slider .swiper-button-prev {
+    display: none !important;
+  }
+}
+
+.portfolio-slider .swiper-pagination-bullet {
+  background: #23443d !important;
+  opacity: 0.25;
+}
+
+.portfolio-slider .swiper-pagination-bullet-active {
+  opacity: 1;
+  width: 18px !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease !important;
+}
+

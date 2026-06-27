@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { appEnv } from "@/lib/env";
 import toast from "react-hot-toast";
 import emailjs from "@emailjs/browser";
+import { apiFetch } from "@/lib/api";
 
 const Contact = () => {
   const company = db.getCompany();
@@ -17,8 +18,25 @@ const Contact = () => {
     setSending(true);
 
     try {
+      // 1. Submit lead to database
+      try {
+        await apiFetch("/api/inquiries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.get("name")?.toString() || "",
+            email: formData.get("email")?.toString() || "",
+            project: formData.get("project")?.toString() || "",
+            message: formData.get("message")?.toString() || "",
+            source: "contact_form"
+          })
+        });
+      } catch (dbErr) {
+        console.error("Database save failed, using EmailJS only:", dbErr);
+      }
+
+      // 2. EmailJS send
       if (appEnv.emailjsServiceId && appEnv.emailjsTemplateId && appEnv.emailjsPublicKey) {
-        // Send email via EmailJS
         const templateParams = {
           name: formData.get("name")?.toString() || "",
           email: formData.get("email")?.toString() || "",

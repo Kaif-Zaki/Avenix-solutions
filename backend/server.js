@@ -260,6 +260,16 @@ const CategorySchema = new mongoose.Schema({
 
 const Category = mongoose.model("Category", CategorySchema);
 
+const InquirySchema = new mongoose.Schema({
+  name: { type: String, default: "Anonymous" },
+  email: { type: String, default: "No email" },
+  project: { type: String, default: "Not specified" },
+  message: { type: String, default: "" },
+  source: { type: String, default: "contact_form" }, // "contact_form" or "chatbot"
+}, { timestamps: true, collection: "inquiries" });
+
+const Inquiry = mongoose.model("Inquiry", InquirySchema);
+
 // Initial Default Content Arrays (Seeder Data)
 const DEFAULT_COMPANY = {
   name: "Avenix Solutions",
@@ -751,6 +761,155 @@ app.delete("/api/categories/:name", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete category: " + err.message });
+  }
+});
+
+// --- INQUIRIES API ENDPOINTS ---
+app.get("/api/inquiries", async (req, res) => {
+  try {
+    const list = await Inquiry.find().sort({ createdAt: -1 });
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get inquiries: " + err.message });
+  }
+});
+
+app.post("/api/inquiries", async (req, res) => {
+  try {
+    const { name, email, project, message, source } = req.body;
+    const item = new Inquiry({ name, email, project, message, source });
+    await item.save();
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create inquiry: " + err.message });
+  }
+});
+
+app.delete("/api/inquiries/:id", async (req, res) => {
+  try {
+    await Inquiry.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete inquiry: " + err.message });
+  }
+});
+
+// --- CHATBOT GEMINI INTEGRATION ---
+let GoogleGenAI;
+const getAIClient = async () => {
+  if (!GoogleGenAI) {
+    const genaiModule = await import("@google/genai");
+    GoogleGenAI = genaiModule.GoogleGenAI;
+  }
+  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+};
+
+const buildSystemInstruction = async () => {
+  const company = await Company.findOne() || {};
+  const services = await Service.find() || [];
+  const projects = await Project.find() || [];
+  const pricing = await Pricing.find() || [];
+  const faq = await Faq.find() || [];
+  const process = await ProcessStep.find() || [];
+
+  let instruction = `You are a helpful, professional, and friendly AI chatbot assistant for ${company.name || "Avenix Solutions"}.
+Your goal is to answer questions about our business, guide potential clients through our services, showcase our portfolio, explain our pricing options, and collect inquiries/leads if someone wants to work with us.
+
+Here is the up-to-date information about our business:
+- Tagline: ${company.tagline || ""}
+- Email: ${company.email || ""}
+- Phone: ${company.phone || ""}
+- Location: ${company.location || ""}
+- WhatsApp: ${company.whatsapp || ""}
+
+Our Services:
+${services.map((s, i) => `${i+1}. ${s.title}: ${s.description}\n   Outcomes: ${s.outcomes?.join(", ")}`).join("\n")}
+
+Our Portfolio Projects:
+${projects.map((p, i) => `${i+1}. ${p.title} (${p.category}): ${p.description}\n   Outcomes: ${p.metrics?.join(", ")}${p.liveUrl ? `\n   Live URL: ${p.liveUrl}` : ""}`).join("\n")}
+
+Our Pricing Packages:
+${pricing.map((pr, i) => `${i+1}. ${pr.name}: ${pr.price} - ${pr.description}\n   Features: ${pr.features?.join(", ")}`).join("\n")}
+
+Our Working Process:
+${process.map((pr, i) => `${i+1}. Step ${i+1} - ${pr.title}: ${pr.description}`).join("\n")}
+
+Frequently Asked Questions (FAQ):
+${faq.map((f, i) => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n")}
+
+---
+INTERACTION GUIDELINES:
+1. Always be polite, engaging, and professional.
+2. If a customer is interested in a package, a service, or a custom build, try to gather their contact details (name and email).
+3. You have the ability to automatically save customer inquiries/leads directly to our database! To do this, you MUST format your final response to include a special JSON block at the very end of your response. When you want to save a lead, output the lead details inside a JSON block with the tag \`[SAVE_INQUIRY]\`.
+Format:
+\`\`\`json
+[SAVE_INQUIRY]
+{
+  "name": "Customer Name",
+  "email": "customer@email.com",
+  "project": "Description of project requested",
+  "message": "Any additional message or notes"
+}
+\`\`\`
+Only output this JSON block once you have successfully gathered at least a name and email or project details from the user. Explain to the user that you are submitting their inquiry to our team.
+4. Keep answers relatively concise and easy to read. Use bullet points where appropriate.
+`;
+  return instruction;
+};
+
+app.post("/api/chat", async (req, res) => {
+  try {
+    const { messages } = req.body;
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(400).json({ error: "Gemini API key is not configured." });
+    }
+
+    const ai = await getAIClient();
+    const systemInstruction = await buildSystemInstruction();
+
+    const contents = messages.map(m => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content || m.text || "" }]
+    }));
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents,
+      config: {
+        systemInstruction,
+      }
+    });
+
+    let replyText = response.text || "";
+
+    const saveIndex = replyText.indexOf("[SAVE_INQUIRY]");
+    if (saveIndex !== -1) {
+      try {
+        const jsonPart = replyText.substring(saveIndex + "[SAVE_INQUIRY]".length).trim();
+        const jsonMatch = jsonPart.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const newInq = new Inquiry({
+            name: parsed.name || "Anonymous",
+            email: parsed.email || "No email",
+            project: parsed.project || "Not specified",
+            message: parsed.message || "Saved via Chatbot conversation",
+            source: "chatbot"
+          });
+          await newInq.save();
+          console.log("Lead captured via chatbot:", newInq);
+        }
+      } catch (err) {
+        console.error("Failed to parse/save chatbot inquiry:", err);
+      }
+      replyText = replyText.substring(0, saveIndex).trim();
+    }
+
+    res.json({ text: replyText });
+  } catch (error) {
+    console.error("Chatbot API error:", error);
+    res.status(552).json({ error: "Chatbot failed to respond: " + error.message });
   }
 });
 

@@ -27,7 +27,8 @@ import {
   Edit3,
   Menu,
   X,
-  Tag
+  Tag,
+  Inbox
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { apiFetch, mediaUrl } from "@/lib/api";
@@ -38,7 +39,7 @@ export default function Admin() {
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [activeTab, setActiveTab] = useState<"general" | "services" | "projects" | "categories" | "pricing" | "faqs" | "process" | "profile">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "services" | "projects" | "categories" | "pricing" | "faqs" | "process" | "profile" | "inquiries">("general");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // CMS States
@@ -50,6 +51,7 @@ export default function Admin() {
   const [process, setProcess] = useState<DBProcessStep[]>(() => db.getProcess());
   const [categories, setCategories] = useState<string[]>(() => db.getCategories());
   const [categoryInput, setCategoryInput] = useState("");
+  const [inquiries, setInquiries] = useState<any[]>([]);
 
   // Edit States
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -94,6 +96,43 @@ export default function Admin() {
       });
     });
   }, []);
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      const fetchInquiries = async () => {
+        try {
+          const res = await apiFetch("/api/inquiries");
+          if (res.ok) {
+            const data = await res.json();
+            setInquiries(data);
+          }
+        } catch (err) {
+          console.error("Failed to load inquiries:", err);
+        }
+      };
+      fetchInquiries();
+    }
+  }, [isAuthenticated]);
+
+  const handleDeleteInquiry = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete/resolve this customer inquiry?")) {
+      return;
+    }
+    try {
+      const res = await apiFetch(`/api/inquiries/${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setInquiries(prev => prev.filter(i => i._id !== id));
+        toast.success("Inquiry removed.");
+      } else {
+        toast.error("Failed to delete inquiry.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error.");
+    }
+  };
 
   // Form templates
   const [newService, setNewService] = useState<Omit<DBService, "id">>({
@@ -573,6 +612,7 @@ export default function Admin() {
               { id: "pricing", label: "Pricing Tiers", icon: DollarSign },
               { id: "process", label: "Process Steps", icon: CheckCircle },
               { id: "faqs", label: "FAQs CMS", icon: HelpCircle },
+              { id: "inquiries", label: "Customer Leads", icon: Inbox },
               { id: "profile", label: "Profile Settings", icon: User },
             ] as const
           ).map((tab) => (
@@ -1708,6 +1748,70 @@ export default function Admin() {
                   Update Profile
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* CUSTOMER LEADS CMS PANEL */}
+          {activeTab === "inquiries" && (
+            <div>
+              <h2 className="text-xl font-bold tracking-tight border-b border-white/10 pb-4">Customer Enquiries & Leads</h2>
+              
+              {inquiries.length === 0 ? (
+                <div className="mt-8 text-center py-12 rounded-lg bg-white/5 border border-white/5 text-stone-400">
+                  <Inbox className="h-10 w-10 mx-auto text-stone-500 mb-3" />
+                  <p className="text-sm font-semibold">No inquiries captured yet.</p>
+                  <p className="text-xs text-stone-500 mt-1">Leads from the chatbot and contact form will appear here.</p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4 max-w-4xl">
+                  {inquiries.map((item) => (
+                    <div key={item._id} className="p-5 rounded-lg bg-[#1e2a27] border border-white/5 shadow-sm space-y-3 relative">
+                      <button
+                        onClick={() => handleDeleteInquiry(item._id)}
+                        className="absolute top-4 right-4 rounded bg-red-600/10 p-2 border border-red-500/15 text-red-400 hover:bg-red-600 hover:text-white transition"
+                        title="Delete Inquiry"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          item.source === "chatbot" 
+                            ? "bg-purple-600/25 border border-purple-500/35 text-purple-200" 
+                            : "bg-emerald-600/25 border border-emerald-500/35 text-emerald-200"
+                        }`}>
+                          {item.source === "chatbot" ? "Aveny Chatbot" : "Contact Form"}
+                        </span>
+                        <span className="text-[10px] text-stone-400">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Date unknown"}
+                        </span>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2 mt-2">
+                        <div>
+                          <p className="text-[10px] font-bold text-stone-450 uppercase">Customer Name</p>
+                          <p className="text-sm font-bold text-white mt-0.5">{item.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-stone-450 uppercase">Contact Email</p>
+                          <a href={`mailto:${item.email}`} className="text-sm font-semibold text-sky-400 hover:underline mt-0.5 block">{item.email}</a>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 border-t border-white/5 pt-3">
+                        <p className="text-[10px] font-bold text-stone-450 uppercase">Requested Project Type</p>
+                        <p className="text-sm font-bold text-[#e7b464] mt-0.5">{item.project}</p>
+                      </div>
+
+                      {item.message && (
+                        <div className="mt-2.5 bg-black/20 rounded p-3 text-xs text-stone-300 leading-relaxed border border-white/[0.02]">
+                          {item.message}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

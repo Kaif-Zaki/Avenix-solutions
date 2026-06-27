@@ -24,7 +24,9 @@ import {
   CheckCircle,
   Sparkles,
   User,
-  Edit3
+  Edit3,
+  Menu,
+  X
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { apiFetch, mediaUrl } from "@/lib/api";
@@ -36,6 +38,7 @@ export default function Admin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState<"general" | "services" | "projects" | "pricing" | "faqs" | "process" | "profile">("general");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // CMS States
   const [company, setCompany] = useState<DBCompany>(() => db.getCompany());
@@ -483,12 +486,40 @@ export default function Admin() {
     );
   }
 
-  // Dashboard Sticky Sidebar Frame
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-[#17211f] text-white flex flex-col lg:flex-row">
       
+      {/* Mobile top bar */}
+      <div className="flex items-center justify-between bg-[#1b2724] border-b border-white/10 p-4 lg:hidden sticky top-0 z-30 shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMobileSidebarOpen(true)}
+            className="rounded-lg bg-white/5 p-2 border border-white/10 text-white"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="text-sm font-black uppercase tracking-wider">{company.name} CMS</span>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="rounded-lg bg-red-600/10 border border-red-500/25 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-600 hover:text-white transition"
+        >
+          Logout
+        </button>
+      </div>
+
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      {mobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-45 lg:hidden" 
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+      
       {/* Left Sidebar */}
-      <aside className="w-full lg:w-72 bg-[#1b2724] border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col lg:sticky lg:top-0 lg:h-screen z-40">
+      <aside className={`fixed inset-y-0 left-0 w-72 bg-[#1b2724] border-r border-white/10 flex flex-col z-50 transition-transform duration-300 lg:static lg:translate-x-0 ${
+        mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
         
         {/* Sidebar Header */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
@@ -499,6 +530,13 @@ export default function Admin() {
               <p className="text-[11px] text-stone-400">CMS Control Panel</p>
             </div>
           </div>
+          {/* Close button on mobile */}
+          <button 
+            onClick={() => setMobileSidebarOpen(false)}
+            className="rounded-full bg-white/5 p-1.5 border border-white/10 text-stone-400 hover:text-white lg:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Sidebar Navigation */}
@@ -516,7 +554,10 @@ export default function Admin() {
           ).map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setMobileSidebarOpen(false);
+              }}
               className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold transition-all ${
                 activeTab === tab.id
                   ? "bg-[#e7b464] text-stone-950 shadow-md shadow-[#e7b464]/10"

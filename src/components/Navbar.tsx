@@ -72,9 +72,9 @@ const Navbar = () => {
 
   return (
     <header 
-      className={`fixed left-1/2 z-50 w-[92%] max-w-6xl -translate-x-1/2 rounded-full border border-stone-200/25 bg-[#f6f2e8]/80 backdrop-blur-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 ease-in-out ${
+      className={`fixed left-1/2 z-50 w-[92%] max-w-6xl -translate-x-1/2 rounded-full border border-stone-200/25 bg-white/70 backdrop-blur-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 ease-in-out ${
         visible ? "top-4 opacity-100" : "-top-24 opacity-0 pointer-events-none"
-      } ${isScrolled ? "py-1 px-5 bg-[#f6f2e8]/90" : "py-2 px-5"}`}
+      } ${isScrolled ? "py-1 px-5 bg-white/85" : "py-2 px-5"}`}
     >
       <div className="flex h-14 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-3 transition hover:opacity-90" aria-label={`${company.name} home`}>
@@ -128,7 +128,7 @@ const Navbar = () => {
       </div>
 
       {open && (
-        <div className="absolute top-[110%] left-0 right-0 rounded-3xl border border-stone-200/25 bg-[#f6f2e8]/95 backdrop-blur-lg shadow-xl lg:hidden overflow-hidden transition-all duration-200">
+        <div className="absolute top-[110%] left-0 right-0 rounded-3xl border border-stone-200/25 bg-white/95 backdrop-blur-lg shadow-xl lg:hidden overflow-hidden transition-all duration-200">
           <div className="grid gap-1.5 p-4">
             {navLinks.map((link) => (
               <a

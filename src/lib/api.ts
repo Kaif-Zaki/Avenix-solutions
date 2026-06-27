@@ -8,9 +8,12 @@ export const apiUrl = (path: string) => {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const baseUrl = trimTrailingSlash(appEnv.apiBaseUrl);
+  let baseUrl = trimTrailingSlash(appEnv.apiBaseUrl);
 
   if (baseUrl) {
+    if (!/^https?:\/\//i.test(baseUrl)) {
+      baseUrl = `https://${baseUrl}`;
+    }
     return `${baseUrl}${normalizedPath}`;
   }
 

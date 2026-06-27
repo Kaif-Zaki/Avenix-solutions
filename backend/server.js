@@ -131,9 +131,12 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/Avenix_Db";
+const MONGODB_URI = process.env.MONGODB_URI ;
 
 // Connect to MongoDB
+const maskedUri = MONGODB_URI ? MONGODB_URI.replace(/:([^@]+)@/, ":******@") : "undefined";
+console.log(`📡 Connecting to MongoDB URI: ${maskedUri}`);
+
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log("🚀 Connected to MongoDB cluster successfully.");

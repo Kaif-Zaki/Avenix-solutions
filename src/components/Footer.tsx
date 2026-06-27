@@ -16,8 +16,8 @@ const Footer = () => {
       <div className="section-container grid gap-10 py-12 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
         <div>
           <p className="text-lg font-black uppercase tracking-[0.18em]">{company.name}</p>
-          <p className="mt-4 max-w-md text-sm leading-7 text-stone-300">
-            Software company websites, web applications, ecommerce, POS systems, and automations for brands that want a sharper digital presence.
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-stone-300">
+            {company.tagline || "Software company websites, web applications, ecommerce, POS systems, and automations for brands that want a sharper digital presence."}
           </p>
         </div>
 
